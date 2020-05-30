@@ -3,7 +3,7 @@
 #include "levels.h" 
 #include "gfx/kanji.h"
 #include "misc_data.h"
-
+#include <psp2/ctrl.h>
 #include <stack>
 
 #define ENEMY_W(i) Level::enemiesArray->data[i].img[0]
@@ -20,7 +20,6 @@ bool G_runBoss = false;
 int G_bossIntroChannel = -2;
 int G_difficulty = 1;
 bool G_usingArrows = false;
-
 t_key G_downKey, G_leftKey, G_rightKey, G_upKey, G_fireKey, G_polarityKey, G_fragmentKey, G_pauseKey;
 
 DrawingCandidates *DC;
@@ -139,21 +138,7 @@ int main(int argc, char **argv)
 		const Uint8 *keys = SDL_GetKeyboardState(NULL);
 
 		drawSprite(image_entries[image_LUT_titleScreen], 0, 0, 0, 0);
-		if(!openedMenu)
-		{
-			int x = (320 - strlen(string_title) * 8) / 2;
-			int y = 160;
-			if(blink % 1024 < 512)
-				drawString(&x, &y, x, string_title, 0, 0xffff);
-			blink++;
-			if(isKeyPressed(SDL_SCANCODE_RETURN))
-			{
-				wait_no_key_pressed(SDL_SCANCODE_RETURN);
-				openedMenu = true;
-			}
-		}
-		else if(openedMenu)
-		{
+
 			void* v[] = { NULL, &G_difficulty, &G_usingArrows, NULL };
 			MenuItem items[TITLE_OPTIONS];
 			for (int i = 0; i < TITLE_OPTIONS; i++)
@@ -210,7 +195,7 @@ int main(int argc, char **argv)
 				playGame();
 				openedMenu = false;
 			}
-		}
+
 		updateScreen();
 		
 		if(isKeyPressed(SDL_SCANCODE_ESCAPE))
@@ -361,7 +346,9 @@ void playGame()
 			while(!hasPressed)
 			{
 				updateKeys();
-				if(isKeyPressed(SDL_SCANCODE_RETURN))
+		SceCtrlData ctrl_press;
+		sceCtrlPeekBufferPositive(0, &ctrl_press, 1);
+				if(isKeyPressed(SDL_SCANCODE_RETURN) || ctrl_press.buttons & SCE_CTRL_CROSS || ctrl_press.buttons & SCE_CTRL_CIRCLE)
 				{
 					hasPressed = true;
 					// - initialise a new ship

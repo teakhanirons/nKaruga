@@ -1,4 +1,5 @@
 #include "common.h"
+#include <psp2/ctrl.h>
 
 Player::Player() : Entity()
 {
@@ -59,10 +60,12 @@ void Player::handle(KeyEvent kEv)
 		}
 		
 		// And then only, player input
-		if(KDOWN(kEv)) y += itofix(2);
-		if(KLEFT(kEv)) x -= itofix(2);
-		if(KRIGHT(kEv)) x += itofix(2);
-		if(KUP(kEv)) y -= itofix(2);
+		SceCtrlData ctrl_press;
+		sceCtrlPeekBufferPositive(0, &ctrl_press, 1);
+		if(KDOWN(kEv) || ctrl_press.buttons & SCE_CTRL_DOWN) y += itofix(2);
+		if(KLEFT(kEv) || ctrl_press.buttons & SCE_CTRL_LEFT) x -= itofix(2);
+		if(KRIGHT(kEv) || ctrl_press.buttons & SCE_CTRL_RIGHT) x += itofix(2);
+		if(KUP(kEv) || ctrl_press.buttons & SCE_CTRL_UP) y -= itofix(2);
 			
 		r.x = fixtoi(x) - (img[(isSwitchingPolarity / 8) * 2][0] / 2);
 		r.y = fixtoi(y) - (img[(isSwitchingPolarity / 8) * 2][1] / 2);
@@ -73,7 +76,7 @@ void Player::handle(KeyEvent kEv)
 		x = r.x < G_minX ? itofix(G_minX + temp.x) : (r.x > G_maxX - (temp.x * 2) ? itofix(G_maxX - temp.x) : x);
 		y = r.y < 0 ? itofix(temp.y) : (r.y > 240 - (temp.y * 2) ? itofix(240 - temp.y) : y);
 		
-		if(KPOLARITY(kEv))
+		if(KPOLARITY(kEv) || ctrl_press.buttons & SCE_CTRL_SQUARE)
 		{
 			if (!polarityRepeat)
 			{
@@ -85,7 +88,7 @@ void Player::handle(KeyEvent kEv)
 		else
 			polarityRepeat = false;
 		
-		if(KPOWER(kEv))
+		if(KPOWER(kEv) || ctrl_press.buttons & SCE_CTRL_CIRCLE)
 		{
 			if(G_power > 9)
 			{
@@ -97,7 +100,7 @@ void Player::handle(KeyEvent kEv)
 			}
 		}
 		
-		if(KFIRE(kEv))
+		if(KFIRE(kEv) || ctrl_press.buttons & SCE_CTRL_CROSS)
 		{
 			if(!fireDelay)
 			{

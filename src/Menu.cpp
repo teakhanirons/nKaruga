@@ -1,5 +1,5 @@
 #include "common.h"
-
+#include <psp2/ctrl.h>
 #define VSPACE 9
 
 const static unsigned short image_cursor[] = { 5, 8, 1,
@@ -107,7 +107,9 @@ int Menu::run()
 		drawSprite(image_cursor, x[choice] - 7, y[choice], 1, 0xffff);
 
 		// Let the user pick an option or fiddle with the values
-		if (isKeyPressed(G_downKey))
+		SceCtrlData ctrl_press;
+		sceCtrlPeekBufferPositive(0, &ctrl_press, 1);
+		if (isKeyPressed(G_downKey) || ctrl_press.buttons & SCE_CTRL_DOWN)
 		{
 			if (!pressed[0] && choice < num - 1)
 			{
@@ -119,7 +121,7 @@ int Menu::run()
 		else
 			pressed[0] = false;
 		
-		if (isKeyPressed(G_upKey))
+		if (isKeyPressed(G_upKey) || ctrl_press.buttons & SCE_CTRL_UP)
 		{
 			if (!pressed[1] && choice > 0)
 			{
@@ -131,7 +133,7 @@ int Menu::run()
 		else
 			pressed[1] = false;
 
-		if (isKeyPressed(SDL_SCANCODE_RETURN))
+		if (isKeyPressed(SDL_SCANCODE_RETURN) || ctrl_press.buttons & SCE_CTRL_CROSS || ctrl_press.buttons & SCE_CTRL_CIRCLE)
 		{
 			if (!pressed[2])
 			{

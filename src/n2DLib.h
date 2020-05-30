@@ -58,7 +58,7 @@ extern void updateScreen();
 extern void updateKeys();
 extern void deinitBuffering();
 extern void timer_load(unsigned, Uint32);
-extern unsigned timer_read(unsigned);
+extern Uint32 timer_read(unsigned);
 extern void clearBufferB();
 extern void clearBufferW();
 extern void clearBuffer(unsigned short);
@@ -91,7 +91,7 @@ extern int isKey(t_key, t_key);
 extern unsigned short * loadBMP(const char*, unsigned short);
 
 #define BUFF_BYTES_SIZE (320*240*2)
-extern unsigned short *BUFF_BASE_ADDRESS;
+extern unsigned short BUFF_BASE_ADDRESS[320 * 240];
 extern SDL_Texture *MAIN_SCREEN;
 
 // Global key state

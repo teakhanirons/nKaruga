@@ -8,8 +8,9 @@ extern "C" {
 /*             *
  *  Buffering  *
  *             */
-
-unsigned short *BUFF_BASE_ADDRESS;
+#define min(X,Y) (((X) < (Y)) ? (X) : (Y))
+#define max(X,Y) (((X) > (Y)) ? (X) : (Y))
+unsigned short BUFF_BASE_ADDRESS[76800];
 SDL_Window *sdlWindow;
 SDL_Renderer *sdlRenderer;
 SDL_Texture *MAIN_SCREEN;
@@ -18,12 +19,9 @@ Uint32 baseFPS;
 
 void initBuffering()
 {
-	SDL_Init(SDL_INIT_VIDEO | SDL_INIT_AUDIO);
-	
-	// This fixes the fullscreen/resize crash, see line 97
-	SDL_SetHint(SDL_HINT_RENDER_DRIVER, "opengl");
-	
-	SDL_CreateWindowAndRenderer(320 * 2, 240 * 2, SDL_WINDOW_BORDERLESS, &sdlWindow, &sdlRenderer);
+	SDL_Init(SDL_INIT_VIDEO | SDL_INIT_AUDIO | SDL_INIT_GAMECONTROLLER);
+	sdlWindow = SDL_CreateWindow("nKaruga", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, 320, 240, SDL_WINDOW_FULLSCREEN_DESKTOP);  
+	sdlRenderer = SDL_CreateRenderer(sdlWindow, -1, SDL_RENDERER_ACCELERATED);
 	SDL_RenderSetLogicalSize(sdlRenderer, 320, 240);
 	if(!sdlWindow || !sdlRenderer)
 	{
@@ -33,10 +31,13 @@ void initBuffering()
 		exit(1);
 	}
 	MAIN_SCREEN = SDL_CreateTexture(sdlRenderer, SDL_PIXELFORMAT_RGB565, SDL_TEXTUREACCESS_STREAMING, 320, 240);
-
-	BUFF_BASE_ADDRESS = (unsigned short*)malloc(320 * 240 * sizeof(unsigned short));
-	memset(BUFF_BASE_ADDRESS, 0, sizeof(BUFF_BASE_ADDRESS));
+	SDL_SetRelativeMouseMode(SDL_TRUE);
 	
+	/* Clear everything on screen */
+	SDL_SetRenderDrawColor(sdlRenderer, 0, 0, 0, 255);
+	SDL_RenderClear(sdlRenderer);
+	SDL_RenderPresent(sdlRenderer);
+
 	baseFPS = SDL_GetTicks();
 	SDL_PumpEvents();
 	G_keys = SDL_GetKeyboardState(NULL);
@@ -85,9 +86,10 @@ void updateScreen()
 	uint8_t *buf = (uint8_t*)BUFF_BASE_ADDRESS;
 	int pitch;
 	SDL_LockTexture(MAIN_SCREEN, NULL, (void**)&pixels, &pitch);
-	for (di = 0; di < 320 * 240 * sizeof(unsigned short); di += sizeof(unsigned int))
-		*(unsigned int*)(pixels + di) = *(unsigned int*)(buf + di);
+	memcpy(pixels,BUFF_BASE_ADDRESS,153600);
 	SDL_UnlockTexture(MAIN_SCREEN);
+	SDL_SetRenderDrawColor(sdlRenderer, 0, 0, 0, 255);
+	SDL_RenderClear(sdlRenderer);
 	
 	if(G_keys[SDL_SCANCODE_F])
 	{
@@ -117,7 +119,6 @@ void deinitBuffering()
 	SDL_DestroyRenderer(sdlRenderer);
 	SDL_DestroyWindow(sdlWindow);
 	SDL_Quit();
-	free(BUFF_BASE_ADDRESS);
 }
 
 /*        *

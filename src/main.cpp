@@ -171,7 +171,7 @@ int main(int argc, char **argv)
 			choice = m.run();
 			if (choice == -1) donePlaying = true;
 			else if (choice == 3)
-			{
+			{/*
 				wait_no_key_pressed(SDL_SCANCODE_RETURN);
 				clearBufferB();
 				int x = 0, y = 0;
@@ -189,7 +189,7 @@ int main(int argc, char **argv)
 				{
 					writeToConfig(configFile);
 					fclose(configFile);
-				}
+				}*/
 			}
 			else if (!choice)
 			{

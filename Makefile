@@ -1,8 +1,8 @@
-TARGET		:= LaiNES
-TITLE	    := LAINESEMU
+TARGET		:= nKaruga
+TITLE	    := NKARUGA00
 
-LIBS = -lSDL2 -lSDL2_mixer -lvita2d -lSceTouch_stub -lmikmod -lvorbisfile -lvorbis -logg -lsndfile -lSceLibKernel_stub -lScePvf_stub \
-	-lSceAppMgr_stub -lSceCtrl_stub -lm -lSceIofilemgr_stub -lSceAppUtil_stub -lScePgf_stub \
+LIBS = -lSDL2_mixer -lSDL2  -lvita2d -lSceTouch_stub -lmikmod -lvorbisfile -lvorbis -logg -lsndfile -lSceLibKernel_stub -lScePvf_stub \
+	-lSceAppMgr_stub -lSceCtrl_stub -lm -lFLAC -lmpg123 -lSceIofilemgr_stub -lSceAppUtil_stub -lScePgf_stub \
 	-lfnblit -lc -lScePower_stub -lSceCommonDialog_stub -lz -lSceAudio_stub -lSceGxm_stub \
 	-lSceDisplay_stub -lSceSysmodule_stub -lSceHid_stub -lSceKernelDmacMgr_stub
 

@@ -5,3 +5,10 @@ screenshots
 *.db
 /.Rhistory
 /.directory
+eboot.bin
+*.elf
+*.velf
+*.self
+*.vpk
+*.o
+*.sfo

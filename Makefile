@@ -1,76 +1,43 @@
-CC := g++
-ARCH :=
-PLATFORM := win
+TARGET		:= LaiNES
+TITLE	    := LAINESEMU
 
-BUILD_DIR := bin
-OUT_DIR = $(BUILD_DIR)/$(PLATFORM)
-OUT_NAME := nKaruga
-FINAL_EXE = $(OUT_DIR)/$(OUT_NAME)
+LIBS = -lSDL2 -lSDL2_mixer -lvita2d -lSceTouch_stub -lmikmod -lvorbisfile -lvorbis -logg -lsndfile -lSceLibKernel_stub -lScePvf_stub \
+	-lSceAppMgr_stub -lSceCtrl_stub -lm -lSceIofilemgr_stub -lSceAppUtil_stub -lScePgf_stub \
+	-lfnblit -lc -lScePower_stub -lSceCommonDialog_stub -lz -lSceAudio_stub -lSceGxm_stub \
+	-lSceDisplay_stub -lSceSysmodule_stub -lSceHid_stub -lSceKernelDmacMgr_stub
 
-RELEASE_DIR := releases
+SOURCES		:=	src \
+				src/gfx \
+				src/sfx
+	
+CFILES   := $(foreach dir,$(SOURCES), $(wildcard $(dir)/*.c))
+CPPFILES := $(foreach dir,$(SOURCES), $(wildcard $(dir)/*.cpp))
+OBJS     := $(CFILES:.c=.o) $(CPPFILES:.cpp=.o)
 
-SRC_DIR := src
+export INCLUDE	:= $(foreach dir,$(SOURCES),-I$(CURDIR)/$(dir))
 
-OBJ_DIR = $(OUT_DIR)/obj
-OBJS = $(patsubst $(SRC_DIR)/%.cpp,$(OBJ_DIR)/%.o, $(wildcard $(SRC_DIR)/*.cpp))
-OBJS += $(patsubst $(SRC_DIR)/%.c,$(OBJ_DIR)/%.o, $(wildcard $(SRC_DIR)/*.c))
+PREFIX  = arm-dolce-eabi
+CC      = $(PREFIX)-gcc
+CXX      = $(PREFIX)-g++
+CFLAGS  = $(INCLUDE) -I${DOLCESDK}/arm-dolce-eabi/include/SDL2
+CXXFLAGS  = $(CFLAGS) -g -Wl,-q -O3 -std=gnu++14 -fpermissive -fexceptions
+ASFLAGS = $(CFLAGS)
 
-INCLUDE_DIRS = -I./SDL2/$(PLATFORM)/include/SDL2/$(ARCH) -I./SDL2_mixer/$(PLATFORM)/include/SDL2/$(ARCH)
-LIB_DIRS = -L./SDL2/$(PLATFORM)/lib/$(ARCH) -L./SDL2_mixer/$(PLATFORM)/lib/$(ARCH)
+all: $(TARGET).vpk
 
-LINKER_FILES_win := -lmsys-2.0 -lSDL2main -lSDL2 -lSDL2_mixer
-LINKER_FILES_nix := -lSDL2 -lSDL2_mixer
-LINKER_FILES_mac := -lSDL2main -lSDL2 -lSDL2_mixer
-FLAGS_win := -fpermissive
-FLAGS_nix := -Wl,-rpath,'$$ORIGIN/lib' -fpermissive
-FLAGS_mac := -Wl,-framework,Cocoa -fpermissive
-WARNINGS := -Wno-write-strings -Wno-pointer-arith -Wno-overflow
+$(TARGET).vpk: $(TARGET).velf
+	dolce-make-fself -s $< eboot.bin
+	dolce-mksfoex -s TITLE_ID=$(TITLE) "$(TARGET)" param.sfo
+	cp -f param.sfo sce_sys/param.sfo
+	7za a -tzip ./$(TARGET).vpk -r ./sce_sys ./eboot.bin ./sfx
 
-windows: $(OBJ_DIR)/icon.o $(FINAL_EXE)
-	cp */win/bin/*.dll $(OUT_DIR)
+%.velf: %.elf
+	cp $< $<.unstripped.elf
+	$(PREFIX)-strip -g $<
+	dolce-elf-create $< $@
 
-linux: PLATFORM := nix
-linux: ARCH := $(shell arch)
-linux: $(FINAL_EXE)
-	[ -e $(OUT_DIR)/lib ] || mkdir $(OUT_DIR)/lib
-	cp */nix/lib/$(ARCH)/*.so.* $(OUT_DIR)/lib
+$(TARGET).elf: $(OBJS)
+	$(CXX) $(CXXFLAGS) $^ $(LIBS) -o $@
 
-mac: PLATFORM := mac
-mac: ARCH := $(shell arch)
-mac: $(FINAL_EXE)
-	[ -e $(OUT_DIR)/lib ] || mkdir $(OUT_DIR)/lib
-	cp */mac/lib/$(ARCH)/*.dylib $(OUT_DIR)/lib
-
-$(FINAL_EXE): $(OBJS)
-	@echo Assembling into $@ ...
-	$(CC) $(OBJ_DIR)/*.o $(INCLUDE_DIRS) $(LIB_DIRS) $(LINKER_FILES_$(PLATFORM)) -o $@ $(FLAGS_$(PLATFORM)) $(WARNINGS) -std=c++11
-	[ -e $(OUT_DIR)/sfx ] || mkdir $(OUT_DIR)/sfx
-	cp -r sfx $(OUT_DIR)
-
-$(OBJ_DIR)/%.o: %.rc | $(OBJ_DIR)
-	@echo Building icon file $< ...
-	windres $< $@
-	@echo
-
-$(OBJ_DIR)/%.o: $(SRC_DIR)/%.c* | $(OBJ_DIR)
-	@echo Building $< to $@ ...
-	$(CC) -c $< $(INCLUDE_DIRS) -o $@ $(FLAGS_$(PLATFORM)) $(WARNINGS) -std=c++11
-	@echo
-
-$(OBJ_DIR):
-	@[ -e $(OBJ_DIR) ] || mkdir -p $(OBJ_DIR)
-
-.PHONY: clean
 clean:
-	-rm -r $(BUILD_DIR)
-
-deploy: DIR := $(shell pwd)/$(RELEASE_DIR)
-deploy:
-	@[ -e $(DIR) ] || mkdir -p $(DIR)
-	cd $(OUT_DIR) ; zip -r $(DIR)/$(OUT_NAME) ./* -xobj/*
-
-deploy-linux: PLATFORM := nix
-deploy-linux: DIR := $(shell pwd)/$(RELEASE_DIR)
-deploy-linux:
-	@[ -e $(DIR) ] || mkdir -p $(DIR)
-	cd $(OUT_DIR) ; zip -r $(DIR)/$(OUT_NAME) ./* -xobj/*
+	@rm -rf $(TARGET).velf $(TARGET).vpk $(TARGET).elf $(TARGET).elf.unstripped.elf eboot.bin param.sfo sce_sys/param.sfo $(OBJS)
